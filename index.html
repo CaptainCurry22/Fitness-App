@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Training</title>
+  <meta name="description" content="Offline-Trainings-Tracker für das Ganzkörpertraining A/B/C.">
+  <meta name="theme-color" content="#f4f5f7" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#0e1116" media="(prefers-color-scheme: dark)">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Training">
+  <meta name="format-detection" content="telephone=no">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="preload" href="fonts/barlow-condensed-latin-700-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="styles.css">
+  <script>
+    /* Theme vor dem ersten Zeichnen setzen, damit nichts aufblitzt */
+    try { var t = localStorage.getItem('theme'); if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t; } catch (e) {}
+  </script>
+</head>
+<body>
+  <main id="main">
+
+    <!-- ========== TRAINING ========== -->
+    <section id="view-training" class="view" aria-labelledby="h-training">
+      <header class="view-head">
+        <h1 id="h-training">Training</h1>
+        <p id="week-count" class="week-count"></p>
+      </header>
+
+      <div id="edit-banner" class="edit-banner" hidden>
+        <p id="edit-banner-text"></p>
+        <button type="button" id="edit-cancel" class="btn btn-ghost">Abbrechen</button>
+      </div>
+
+      <div class="day-picker" role="radiogroup" aria-label="Trainingstag" id="day-picker"></div>
+
+      <label class="date-field">
+        <span>Datum der Einheit</span>
+        <input type="date" id="session-date" required>
+      </label>
+
+      <div id="exercise-list" class="exercise-list"></div>
+
+      <button type="button" id="save-btn" class="btn btn-primary btn-block btn-save">Training speichern</button>
+      <button type="button" id="discard-btn" class="btn btn-ghost btn-block">Eingaben verwerfen</button>
+    </section>
+
+    <!-- ========== VERLAUF ========== -->
+    <section id="view-history" class="view" aria-labelledby="h-history" hidden>
+      <header class="view-head">
+        <h1 id="h-history">Verlauf</h1>
+        <p id="history-count" class="sub"></p>
+      </header>
+      <ul id="history-list" class="history-list"></ul>
+    </section>
+
+    <!-- ========== FORTSCHRITT ========== -->
+    <section id="view-progress" class="view" aria-labelledby="h-progress" hidden>
+      <header class="view-head">
+        <h1 id="h-progress">Fortschritt</h1>
+      </header>
+      <label class="select-field">
+        <span>Übung</span>
+        <select id="progress-exercise"></select>
+      </label>
+      <div id="progress-body"></div>
+    </section>
+
+    <!-- ========== EINSTELLUNGEN ========== -->
+    <section id="view-settings" class="view" aria-labelledby="h-settings" hidden>
+      <header class="view-head">
+        <h1 id="h-settings">Einstellungen</h1>
+      </header>
+
+      <div class="card">
+        <h2>Darstellung</h2>
+        <div class="segmented" role="radiogroup" aria-label="Farbschema" id="theme-picker">
+          <button type="button" role="radio" data-theme-value="light">Hell</button>
+          <button type="button" role="radio" data-theme-value="dark">Dunkel</button>
+          <button type="button" role="radio" data-theme-value="system">System</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Pausen-Timer</h2>
+        <label class="switch-row">
+          <span>Timer nach abgehaktem Satz starten</span>
+          <input type="checkbox" id="auto-timer" class="switch">
+        </label>
+        <div class="stepper-row">
+          <span id="lbl-rest-grund">Grundübungen</span>
+          <div class="stepper" aria-labelledby="lbl-rest-grund">
+            <button type="button" class="btn btn-icon" data-rest="restCompound" data-step="-15" aria-label="Pause Grundübungen 15 Sekunden kürzer">−</button>
+            <output id="rest-compound" aria-live="polite"></output>
+            <button type="button" class="btn btn-icon" data-rest="restCompound" data-step="15" aria-label="Pause Grundübungen 15 Sekunden länger">+</button>
+          </div>
+        </div>
+        <div class="stepper-row">
+          <span id="lbl-rest-iso">Isolationsübungen</span>
+          <div class="stepper" aria-labelledby="lbl-rest-iso">
+            <button type="button" class="btn btn-icon" data-rest="restIsolation" data-step="-15" aria-label="Pause Isolationsübungen 15 Sekunden kürzer">−</button>
+            <output id="rest-isolation" aria-live="polite"></output>
+            <button type="button" class="btn btn-icon" data-rest="restIsolation" data-step="15" aria-label="Pause Isolationsübungen 15 Sekunden länger">+</button>
+          </div>
+        </div>
+        <label class="switch-row">
+          <span>Ton am Ende der Pause</span>
+          <input type="checkbox" id="timer-sound" class="switch">
+        </label>
+      </div>
+
+      <div class="card">
+        <h2>Datensicherung</h2>
+        <p class="muted">Sichere deine Daten regelmäßig als JSON-Datei, z. B. in der Dateien-App oder iCloud Drive.</p>
+        <button type="button" id="export-btn" class="btn btn-primary btn-block">Daten exportieren</button>
+        <label class="btn btn-secondary btn-block file-btn">
+          Daten importieren
+          <input type="file" id="import-file" accept="application/json,.json">
+        </label>
+        <p id="storage-status" class="muted small"></p>
+      </div>
+
+      <div class="card">
+        <h2>Über</h2>
+        <p class="muted small">Alle Daten bleiben auf diesem Gerät. Kein Konto, keine Werbung, keine Verbindung zu fremden Servern. <span id="app-version"></span></p>
+      </div>
+    </section>
+  </main>
+
+  <!-- Pausen-Timer -->
+  <div id="timer" class="timer" hidden role="timer" aria-live="off">
+    <div class="timer-bar"><div id="timer-progress" class="timer-progress"></div></div>
+    <div class="timer-inner">
+      <div class="timer-text">
+        <span class="timer-label" id="timer-label">Pause</span>
+        <span class="timer-time" id="timer-time">0:00</span>
+      </div>
+      <button type="button" class="btn btn-ghost" id="timer-minus" aria-label="15 Sekunden weniger">−15</button>
+      <button type="button" class="btn btn-ghost" id="timer-plus" aria-label="15 Sekunden mehr">+15</button>
+      <button type="button" class="btn btn-ghost" id="timer-stop">Fertig</button>
+    </div>
+  </div>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <nav class="tabbar" aria-label="Hauptnavigation">
+    <button type="button" class="tab" data-view="training" aria-current="page">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10v4M6 7v10M18 7v10M21 10v4M6 12h12"/></svg>
+      <span>Training</span>
+    </button>
+    <button type="button" class="tab" data-view="history">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
+      <span>Verlauf</span>
+    </button>
+    <button type="button" class="tab" data-view="progress">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 19h18M5 15l4-5 4 3 6-7"/></svg>
+      <span>Fortschritt</span>
+    </button>
+    <button type="button" class="tab" data-view="settings">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M2 12h3M19 12h3M4.9 19.1 7 17M17 7l2.1-2.1"/></svg>
+      <span>Einstellungen</span>
+    </button>
+  </nav>
+
+  <script src="plan.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
