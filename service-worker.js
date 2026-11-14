@@ -1,13 +1,14 @@
 /* Service Worker: cacht alle Dateien, damit die App komplett offline läuft.
- * Nach JEDER Änderung an einer Datei (z. B. plan.js) CACHE_VERSION erhöhen,
+ * Nach JEDER Änderung an einer Datei (z. B. catalog.js) CACHE_VERSION erhöhen,
  * damit das iPhone die neue Version lädt. */
-const CACHE_VERSION = 1;
+const CACHE_VERSION = 2;
 const CACHE = `trainings-tracker-v${CACHE_VERSION}`;
 const FILES = [
   './',
   './index.html',
   './styles.css',
-  './plan.js',
+  './catalog.js',
+  './generator.js',
   './app.js',
   './manifest.webmanifest',
   './fonts/barlow-condensed-latin-600-normal.woff2',

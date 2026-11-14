@@ -44,6 +44,22 @@
         <input type="date" id="session-date" required>
       </label>
 
+      <section id="plan-card" class="card plan-card" aria-labelledby="h-plan">
+        <button type="button" id="plan-toggle" class="plan-toggle" aria-expanded="true" aria-controls="plan-body">
+          <span class="plan-title"><span id="h-plan" class="h2">Tagesübersicht</span><span id="plan-dur" class="plan-dur"></span></span>
+          <svg class="h-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+        </button>
+        <div id="plan-body">
+          <p class="muted small plan-help">Übung antippen zum Tauschen, Stecknadel zum Anpinnen (bleibt beim Mischen an ihrem Tag).</p>
+          <ol id="plan-list" class="plan-list"></ol>
+          <div id="plan-warn" class="plan-warn" hidden></div>
+          <div class="plan-actions">
+            <button type="button" id="shuffle-btn" class="btn btn-secondary">Plan neu mischen</button>
+            <button type="button" id="undo-btn" class="btn btn-ghost" hidden>Rückgängig</button>
+          </div>
+        </div>
+      </section>
+
       <div id="exercise-list" class="exercise-list"></div>
 
       <button type="button" id="save-btn" class="btn btn-primary btn-block btn-save">Training speichern</button>
@@ -92,26 +108,17 @@
           <span>Timer nach abgehaktem Satz starten</span>
           <input type="checkbox" id="auto-timer" class="switch">
         </label>
-        <div class="stepper-row">
-          <span id="lbl-rest-grund">Grundübungen</span>
-          <div class="stepper" aria-labelledby="lbl-rest-grund">
-            <button type="button" class="btn btn-icon" data-rest="restCompound" data-step="-15" aria-label="Pause Grundübungen 15 Sekunden kürzer">−</button>
-            <output id="rest-compound" aria-live="polite"></output>
-            <button type="button" class="btn btn-icon" data-rest="restCompound" data-step="15" aria-label="Pause Grundübungen 15 Sekunden länger">+</button>
-          </div>
-        </div>
-        <div class="stepper-row">
-          <span id="lbl-rest-iso">Isolationsübungen</span>
-          <div class="stepper" aria-labelledby="lbl-rest-iso">
-            <button type="button" class="btn btn-icon" data-rest="restIsolation" data-step="-15" aria-label="Pause Isolationsübungen 15 Sekunden kürzer">−</button>
-            <output id="rest-isolation" aria-live="polite"></output>
-            <button type="button" class="btn btn-icon" data-rest="restIsolation" data-step="15" aria-label="Pause Isolationsübungen 15 Sekunden länger">+</button>
-          </div>
-        </div>
+        <p class="muted small">Die Pausenzeit gilt je Übung und lässt sich im Übungskatalog ändern (Standard 2:00 min, Bankdrücken 2:30, Core 1:00).</p>
         <label class="switch-row">
           <span>Ton am Ende der Pause</span>
           <input type="checkbox" id="timer-sound" class="switch">
         </label>
+      </div>
+
+      <div class="card">
+        <h2>Übungskatalog</h2>
+        <p id="catalog-summary" class="muted"></p>
+        <button type="button" id="catalog-open" class="btn btn-secondary btn-block">Katalog ansehen und bearbeiten</button>
       </div>
 
       <div class="card">
@@ -122,6 +129,7 @@
           Daten importieren
           <input type="file" id="import-file" accept="application/json,.json">
         </label>
+        <button type="button" id="backup-old-btn" class="btn btn-ghost btn-block" hidden>Automatisches Backup vor dem Update sichern</button>
         <p id="storage-status" class="muted small"></p>
       </div>
 
@@ -130,7 +138,23 @@
         <p class="muted small">Alle Daten bleiben auf diesem Gerät. Kein Konto, keine Werbung, keine Verbindung zu fremden Servern. <span id="app-version"></span></p>
       </div>
     </section>
+
+    <!-- ========== KATALOG ========== -->
+    <section id="view-catalog" class="view" aria-labelledby="h-catalog" hidden>
+      <button type="button" id="catalog-back" class="btn btn-ghost back-btn">‹ Einstellungen</button>
+      <header class="view-head">
+        <h1 id="h-catalog">Katalog</h1>
+        <p id="catalog-count" class="sub"></p>
+      </header>
+      <p class="muted small">Deaktivierte Übungen werden beim Mischen nicht mehr verwendet. Der aktuelle Plan bleibt bis zum nächsten Mischen gleich.</p>
+      <button type="button" id="catalog-add" class="btn btn-primary btn-block">+ Übung hinzufügen</button>
+      <div id="catalog-list" class="catalog-list"></div>
+    </section>
   </main>
+
+  <dialog id="sheet" class="sheet" aria-labelledby="sheet-title">
+    <div id="sheet-body"></div>
+  </dialog>
 
   <!-- Pausen-Timer -->
   <div id="timer" class="timer" hidden role="timer" aria-live="off">
@@ -167,7 +191,8 @@
     </button>
   </nav>
 
-  <script src="plan.js"></script>
+  <script src="catalog.js"></script>
+  <script src="generator.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

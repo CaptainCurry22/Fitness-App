@@ -1,6 +1,7 @@
 # Trainings-Tracker (PWA)
 
 Offline-fähiger Trainings-Tracker für das Ganzkörpertraining A → B → C fürs iPhone.
+Der Wochenplan wird aus einem Übungskatalog nach festen Regeln zusammengemischt.
 Reines HTML, CSS und JavaScript: kein Framework, kein Build-Schritt, keine externen Anfragen.
 Alle Daten bleiben auf dem Gerät (IndexedDB).
 
@@ -10,8 +11,10 @@ Alle Daten bleiben auf dem Gerät (IndexedDB).
 |---|---|
 | `index.html` | Oberfläche |
 | `styles.css` | Design (Hell/Dunkel über CSS-Variablen) |
-| `plan.js` | **Trainingsplan**: hier änderst du Übungen |
+| `catalog.js` | **Übungskatalog** (Standardwerte aller Übungen) |
+| `generator.js` | Plan-Generator mit den Regeln für den Wochenplan |
 | `app.js` | App-Logik |
+| `tests/generator.test.js` | Unit-Tests für die Regeln (`node --test tests/generator.test.js`) |
 | `service-worker.js` | Offline-Cache |
 | `manifest.webmanifest` | App-Name, Icons, Vollbild-Modus |
 | `icons/` | App-Icons (180, 192, 512 px) |
@@ -47,48 +50,38 @@ Dann <http://localhost:8000> öffnen.
 5. Die App einmal **mit Internetverbindung** vom Home-Bildschirm öffnen. Dabei werden alle Dateien
    für die Offline-Nutzung gespeichert. Danach funktioniert sie auch ohne Netz im Fitnessstudio.
 
-## Übungen ändern (`plan.js`)
+## Wochenplan und Übungskatalog
 
-`plan.js` besteht aus zwei Teilen:
+**Plan neu mischen** (Training → Tagesübersicht) verteilt die Übungen aus dem Katalog neu auf die Tage A, B und C.
+Du siehst erst eine Vorschau („Übernehmen“ / „Nochmal mischen“), danach lässt sich das letzte Mischen mit **Rückgängig** zurücknehmen.
+Der Plan bleibt gespeichert, bis du wieder mischst.
 
-**`UEBUNGEN`** listet jede Übung einmal auf:
+- **Tauschen:** Übung in der Tagesübersicht antippen → Alternative aus demselben Slot wählen.
+  Es werden nur Übungen angeboten, die keine Pflichtregel verletzen.
+- **Anpinnen:** Stecknadel antippen → die Übung bleibt beim nächsten Mischen an ihrem Tag.
 
-```js
-kniebeugen: { name: 'Kniebeugen', art: 'grund', messung: 'wdh', gewicht: 'pflicht' },
-```
+Aufbau jedes Tages: Beine → Brust → Rücken vertikal → Rücken horizontal → Seitheben → Arme/Ergänzung → Finisher
+(Grundübungen vor Isolationsübungen, Core immer am Ende).
+Pflichtregeln: Kniebeugen, Rumänisches Kreuzheben und Beinpresse je genau 1× pro Woche, jeden Tag eine Seitheben-Variante,
+Schrägbankdrücken mindestens 1×, mindestens 1× Bizeps und 1× Trizeps (Dips zählen), keine Übung doppelt, jeder Tag 50–70 Minuten.
+Wunschregeln: hintere Schulter, Schulterdrücken/Schultermaschine, 2× Core, Abwechslung zum vorherigen Plan.
 
-- Der Schlüssel (`kniebeugen`) ist die feste ID. Unter ihr wird der Verlauf gespeichert.
-  **Ändere die ID einer Übung nicht mehr, wenn du sie schon trainiert hast.** Den `name` darfst du jederzeit ändern.
-- `art`: `'grund'` (+2,5 kg, Pause 2:30) oder `'isolation'` (+1 kg, Pause 1:15)
-- `messung`: `'wdh'` (Wiederholungen) oder `'sek'` (Sekunden, z. B. Plank)
-- `gewicht`: `'pflicht'` (Fortschritt = höchstes Gewicht) oder `'optional'`
-  (Körpergewicht, Fortschritt = Summe der Wiederholungen bzw. Sekunden)
+Geschätzte Dauer je Übung = Sätze × (Arbeitszeit + Pause) + 1:30 min Wechsel.
+Die Arbeitszeit beträgt 45 Sek. pro Satz, bei 21ern 75 Sek. und bei Plank die Haltezeit.
 
-**`TAGE`** legt fest, welche Übungen an welchem Tag dran sind:
+### Übungen ändern
 
-```js
-A: [
-  { uebung: 'kniebeugen', saetze: 3, ziel: [6, 8] },
-  ...
-],
-```
+Am einfachsten direkt in der App: **Einstellungen → Übungskatalog**. Dort kannst du Übungen bearbeiten, hinzufügen und deaktivieren.
+Diese Änderungen bleiben auf dem iPhone gespeichert und sind im Export enthalten. Sie wirken beim nächsten Mischen.
 
-- `uebung`: ID aus `UEBUNGEN`
-- `saetze`: geplante Anzahl Sätze
-- `ziel`: Wiederholungsbereich `[von, bis]` (bei Face Pulls z. B. `[15, 15]`)
+Die Standardwerte stehen in `catalog.js`. Die Felder sind oben in der Datei erklärt.
+**Ändere die `id` einer Übung nicht**, sonst ist ihr bisheriger Verlauf nicht mehr mit ihr verknüpft.
 
-Benutzt du dieselbe ID an mehreren Tagen (wie `seitheben_kh` an Tag A und C), wird der Verlauf gemeinsam geführt.
+### Wichtig nach jeder Änderung an einer Datei
 
-**Beispiel: Übung austauschen.** Neue Übung in `UEBUNGEN` eintragen, z. B.
-`hip_thrust: { name: 'Hip Thrust', art: 'grund', messung: 'wdh', gewicht: 'pflicht' },`,
-dann in `TAGE` bei der alten Übung `uebung: 'hip_thrust'` eintragen.
-Alte Einheiten bleiben im Verlauf erhalten.
-
-### Wichtig nach jeder Änderung
-
-In `service-worker.js` die Zahl bei `const CACHE_VERSION = 1;` um eins erhöhen (2, 3, …), committen und pushen.
+In `service-worker.js` die Zahl bei `const CACHE_VERSION = …;` um eins erhöhen, committen und pushen.
 Sonst zeigt das iPhone weiter die zwischengespeicherte alte Version.
-Nach dem Push die App mit Internetverbindung öffnen, schließen und erneut öffnen. Dann ist die neue Version aktiv.
+Beim nächsten Öffnen mit Internet lädt die App die neue Version und startet einmal neu.
 
 ## Datensicherung
 
@@ -97,6 +90,9 @@ z. B. in „Dateien“ oder iCloud Drive sicherst. **Daten importieren** stellt 
 Dabei werden die aktuellen Daten auf dem Gerät ersetzt.
 
 Sichere regelmäßig: Wird die App vom Home-Bildschirm gelöscht, löscht iOS auch ihre Daten.
+
+Beim Update auf Version 2 hat die App deine Daten automatisch migriert und vorher ein Backup angelegt.
+Du findest es unter **Einstellungen → Automatisches Backup … (vor dem Update) sichern**.
 
 ## Hinweise zu iOS
 
